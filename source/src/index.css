@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #F1F1F4;
+  --card: #FFFFFF;
+  --card-2: #F7F7FA;
+  --line: #E3E3E9;
+  --line-2: #C9C9D3;
+  --text: #0B0B0F;
+  --muted: #63636E;
+
+  --motion: #2F6FD0;
+  --motion-d: #2559A8;
+  --ctrl: #B0700C;
+  --ctrl-d: #8E5A08;
+  --vars: #C4581D;
+  --vars-d: #9E4715;
+  --bool: #1F7A4D;
+  --bool-d: #186340;
+
+  --g-run: linear-gradient(135deg, #D4126C 0%, #5636E0 100%);
+  --g-ok: linear-gradient(135deg, #0A54C4 0%, #0A7A50 100%);
+  --g-hot: linear-gradient(135deg, #F5A800 0%, #E2560A 100%);
+
+  --tab: 20px;
+  --tabh: 6px;
+  --tabx: 15px;
+  --arm: 16px;
+  --sh: 0 1px 2px rgba(15, 15, 25, 0.05), 0 10px 26px rgba(15, 15, 25, 0.06);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+
+.grad {
+  background: var(--g-run);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbar utilities */
+
+/* Prism Syntax Highlighting Styles (GitHub Dark Dimmed style) */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8B949E;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #C9D1D9;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #79C0FF;
+}
+
+.token.boolean,
+.token.number {
+  color: #FFA657;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.inserted {
+  color: #7EE787;
+}
+
+.token.builtin {
+  color: #79C0FF;
+}
+
+.token.operator,
+.token.entity,
+.token.url {
+  color: #FF7B72;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #FF7B72;
+  font-weight: 600;
+}
+
+.token.function,
+.token.class-name {
+  color: #D2A8FF;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #FFA657;
+}
+
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #DCDCE6;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #A0A0BA;
+}

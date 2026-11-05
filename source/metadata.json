@@ -1,0 +1,8 @@
+{
+  "name": "New Remix Python 2 Ровер · Станция",
+  "description": "Интерактивная станция обучения Python 3: практический курс с автопроверкой решений, интерактивный справочник функций и песочница с интерпретатором",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
