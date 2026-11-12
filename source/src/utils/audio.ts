@@ -198,3 +198,142 @@ export function playMagicSound() {
   } catch {}
 }
 
+export function playDrumSound(filename: string, volume = 1.0) {
+  if (!soundEnabled) return;
+  const vol = Math.max(0, Math.min(1, volume));
+  if (vol <= 0) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const name = filename.toLowerCase();
+
+    const makeNoise = (duration: number, filterType: BiquadFilterType, freq: number, gainPeak: number, startOffset = 0) => {
+      const sampleCount = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < sampleCount; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = filterType;
+      filter.frequency.setValueAtTime(freq, t + startOffset);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(gainPeak * vol, t + startOffset);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + startOffset + duration);
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      src.start(t + startOffset);
+      src.stop(t + startOffset + duration);
+    };
+
+    if (name.includes("kick")) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(150, t);
+      osc.frequency.exponentialRampToValueAtTime(42, t + 0.16);
+      gain.gain.setValueAtTime(0.45 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.18);
+    } else if (name.includes("snare")) {
+      makeNoise(0.14, "highpass", 1000, 0.25);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(190, t);
+      osc.frequency.exponentialRampToValueAtTime(90, t + 0.08);
+      gain.gain.setValueAtTime(0.22 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.09);
+    } else if (name.includes("hat")) {
+      makeNoise(0.06, "highpass", 6500, 0.18);
+    } else if (name.includes("clap")) {
+      makeNoise(0.03, "bandpass", 1800, 0.22, 0);
+      makeNoise(0.03, "bandpass", 1800, 0.22, 0.012);
+      makeNoise(0.12, "bandpass", 1600, 0.26, 0.024);
+    } else if (name.includes("tom")) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(210, t);
+      osc.frequency.exponentialRampToValueAtTime(85, t + 0.18);
+      gain.gain.setValueAtTime(0.35 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.19);
+    } else if (name.includes("crash")) {
+      makeNoise(0.45, "highpass", 4200, 0.22);
+    } else if (name.includes("perc")) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(760, t);
+      osc.frequency.exponentialRampToValueAtTime(480, t + 0.07);
+      gain.gain.setValueAtTime(0.24 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.08);
+    } else if (name.includes("bass")) {
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(110, t);
+      osc.frequency.exponentialRampToValueAtTime(55, t + 0.22);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(480, t);
+      gain.gain.setValueAtTime(0.3 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.24);
+    } else if (name.includes("cowbell")) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(750, t);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.22 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      [540, 800].forEach((freq) => {
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, t);
+        osc.connect(filter);
+        osc.start(t);
+        osc.stop(t + 0.16);
+      });
+    } else {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.exponentialRampToValueAtTime(220, t + 0.1);
+      gain.gain.setValueAtTime(0.25 * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.11);
+    }
+  } catch {}
+}
+
+

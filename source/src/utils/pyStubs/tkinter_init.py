@@ -1,6 +1,12 @@
 END = "end"
 WIDGETS = []
 LOG = []
+AFTER_QUEUE = []
+
+class Event:
+    def __init__(self, char="", keysym=""):
+        self.char = char
+        self.keysym = keysym
 
 class Widget:
     def __init__(self, master=None, **kw):
@@ -37,6 +43,8 @@ class Tk(Widget):
         pass
     def after(self, ms, func=None, *args):
         self.opts["after"] = (ms, func)
+        if func is not None:
+            AFTER_QUEUE.append((ms, func, args))
     def protocol(self, name, func=None):
         self.opts["protocol:" + str(name)] = func
 

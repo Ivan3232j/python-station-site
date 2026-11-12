@@ -1488,7 +1488,7 @@ export const PYTHON_MODULES: PythonCurriculumModule[] = [
   {
     id: "module_tkinter",
     title: "9. Графический интерфейс с Tkinter",
-    description: "Создание оконных приложений (GUI): главное окно Tk(), надписи Label, кнопки Button, поля ввода Entry, Listbox и JSON",
+    description: "Создание оконных приложений (GUI): виджеты, JSON, музыкальный плеер, классы в драм-машине и пошаговый секвенсор",
     icon: "AppWindow",
     color: "#5636E0",
     lessons: TKINTER_LESSONS,

@@ -35,15 +35,42 @@ class _Music:
     def get_busy(self):
         return self._is_playing and not self._is_paused
 
+class _Sound:
+    def __init__(self, file):
+        self.file = str(file)
+        self._volume = 1.0
+        self._play_count = 0
+
+    def play(self, loops=0, maxtime=0, fade_ms=0):
+        self._play_count = self._play_count + 1
+        mixer._sound_queue.append((self.file, self._volume))
+
+    def stop(self):
+        pass
+
+    def set_volume(self, vol):
+        self._volume = max(0.0, min(1.0, float(vol)))
+
+    def get_volume(self):
+        return self._volume
+
 class _Mixer:
     def __init__(self):
         self.music = _Music()
+        self._sound_queue = []
 
     def init(self, *a, **kw):
         pass
 
-    def quit(self):
+    def Sound(self, file):
+        return _Sound(file)
+
+    def stop(self):
         self.music.stop()
+        self._sound_queue = []
+
+    def quit(self):
+        self.stop()
 
 mixer = _Mixer()
 

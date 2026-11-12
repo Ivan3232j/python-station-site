@@ -1195,4 +1195,656 @@ print("OK_HEROES_TAVERN")
       },
     },
   },
+
+  // ==========================================
+  // УРОК 9: ДРАМ-МАШИНА
+  // ==========================================
+  {
+    id: "tkinter_drum_machine",
+    moduleId: "module_tkinter",
+    title: "9. Драм-машина: классы (class), self, Sound и игра с клавиатуры",
+    icon: "Keyboard",
+    shortDesc: "Один чертёж class Pad — восемь барабанных пэдов со звуком, вспышкой и клавишами 1–8",
+    theory: {
+      story: {
+        letter:
+          "ВХОДЯЩЕЕ СООБЩЕНИЕ\nОТПРАВИТЕЛЬ: ЗАКАЗЧИК\n\nПлеер работает, слушаю каждый день.\n\nНовая задача. Наш саунд-дизайнер просит драм-машину: восемь кнопок, каждая со своим звуком. Нажал — ударило.\n\nИ чтобы можно было играть с клавиатуры. Мышкой ритм не настучишь.",
+        task: "Восемь пэдов, свои короткие звуки, вспышка при ударе и игра с клавиатуры.",
+        quotes: [
+          {
+            speaker: "Алёна, продюсер",
+            text: "Задача на день: восемь пэдов, свои звуки, игра с клавиатуры.",
+          },
+          {
+            speaker: "Макс, техлид",
+            text: "Чертёж один, а пэдов по нему можно наделать сколько угодно.",
+          },
+          {
+            speaker: "Макс, техлид",
+            text: "Шестнадцать функций на восемь кнопок. Попросят шестнадцать пэдов — вы уволитесь.",
+          },
+          {
+            speaker: "Ева, QA-инженер",
+            text: "Скобки после hit — и звук бьёт при запуске, а кнопка мёртвая. Проверено.",
+          },
+          {
+            speaker: "Макс, техлид",
+            text: "У легендарной Roland TR-808 было 16 кнопок, и внутри каждая устроена одинаково. Сегодня сделаем так же.",
+          },
+          {
+            speaker: "Алёна, продюсер",
+            text: "Восемь кнопок, один класс. Если завтра попросят сто — поменяется одна строка.",
+          },
+        ],
+      },
+      summary:
+        "Класс — это чертёж, а объект — вещь, сделанная по этому чертежу. Чертёж class Pad говорит: у каждого пэда есть звук, клавиша, цвет и кнопка, и каждый пэд умеет ударить (hit) и погаснуть (reset). Сами пэды — бочка, малый, хэт — это объекты. Чертёж один, объектов восемь.\n\nГлавное правило: объект нужен, когда у данных есть поведение. Обычная функция ничего не помнит между вызовами. Если делать 8 кнопок без класса, придётся написать 8 звуков, 8 кнопок и 16 почти одинаковых функций (hit_kick, reset_kick...). А если написать одну функцию hit(sound) и передать command=hit(kick), скобки вызовут её сразу при запуске, и кнопка останется мёртвой.\n\nОбъект решает это через self: self — это ссылка на конкретный объект («я сам»). Внутри __init__ мы сохраняем self.sound, self.key, self.color и self.button, а кнопке отдаём command=self.hit БЕЗ скобок. Когда кнопку нажмут позже, метод hit(self) точно знает, чей звук играть и какую кнопку перекрасить!\n\nДля коротких барабанных звуков вместо mixer.music (который играет одну длинную песню) используется pygame.mixer.Sound(file). Такие звуки можно запускать мгновенно и даже одновременно.\n\nА чтобы играть ритм с клавиатуры, мы привязываем ко всему окну событие нажатия клавиш: window.bind(\"<Key>\", on_key). В функцию приходит объект event, и в event.char лежит символ нажатой клавиши (\"1\"–\"8\").\n\nМинутка истории: в 1980 году драм-машина Roland TR-808 провалилась в продаже — барабаны звучали «ненастоящими», и её сняли с производства. Подержанные 808 отдавали за копейки, их раскупили музыканты без денег на живых барабанщиков — и из этого звука родился хип-хоп. А классы в реальных программах и играх повсюду: сама кнопка tk.Button — объект класса Button, сто гоблинов в RPG создаются из одного класса Goblin, а в FL Studio каждая клавиша — объект со своей нотой и цветом.",
+      keyRule:
+        "Объект нужен, когда у данных есть поведение! Всё своё объект хранит в self (self.sound, self.button), а методу в кнопке скобки не нужны: command=self.hit.",
+      sections: [
+        {
+          heading: "Чертёж class Pad и метод __init__",
+          text: "class Pad: описывает устройство любого пэда. Метод __init__ запускается автоматически при создании Pad(...), а self позволяет объекту запомнить свои данные.",
+          codeExample: {
+            title: "Минимальный класс Pad",
+            code: `class Pad:\n    def __init__(self, name, file, key, color, row, column):\n        self.sound = pygame.mixer.Sound(file)\n        self.key = key\n        self.color = color\n        self.button = tk.Button(window, text=name + "\\n" + key, command=self.hit)\n        self.button.grid(row=row, column=column, padx=5, pady=5)`,
+            explanation:
+              "Без self. переменная исчезнет сразу после окончания __init__.",
+          },
+        },
+        {
+          heading: "Короткие звуки pygame.mixer.Sound и клавиатура",
+          text: "pygame.mixer.Sound(file) загружает короткий сэмпл, который можно проигрывать много раз одновременно. window.bind(\"<Key>\", on_key) перехватывает нажатия клавиш, передавая event.char.",
+        },
+      ],
+      steps: [
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Драм-машина ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Pad:\n    def __init__(self, name, key, row, column):\n        self.key = key\n        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),\n                                width=8, height=3, bg="gray")\n        self.button.grid(row=row, column=column, padx=5, pady=5)\n\n\nkick = Pad("Бочка", "1", 0, 0)\nsnare = Pad("Малый", "2", 0, 1)\n\nwindow.mainloop()`,
+          output: "В тёмном окне появились две серые кнопки «Бочка / 1» и «Малый / 2»",
+          explanation:
+            "Шаг 1. Чертёж и две кнопки. Имя класса пишется с большой буквы (Pad). __init__ создаёт кнопку с переносом строки \\n и ставит её в сетку grid.",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Драм-машина ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Pad:\n    def __init__(self, name, file, key, row, column):\n        self.sound = pygame.mixer.Sound(file)\n        self.key = key\n        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),\n                                width=8, height=3, bg="gray", command=self.hit)\n        self.button.grid(row=row, column=column, padx=5, pady=5)\n\n    def hit(self):\n        self.sound.play()\n\n\nkick = Pad("Бочка", "sounds/kick.wav", "1", 0, 0)\nsnare = Pad("Малый", "sounds/snare.wav", "2", 0, 1)\n\nwindow.mainloop()`,
+          output: "При нажатии на «Бочка» звучит бочка, на «Малый» — малый барабан",
+          explanation:
+            "Шаг 2. Добавляем звук через pygame.mixer.Sound(file) и метод hit(self). В command=self.hit пишем без скобок: каждый пэд играет именно свой звук.",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Драм-машина ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Pad:\n    def __init__(self, name, file, key, color, row, column):\n        self.sound = pygame.mixer.Sound(file)\n        self.key = key\n        self.color = color\n        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),\n                                width=8, height=3, bg="gray", command=self.hit)\n        self.button.grid(row=row, column=column, padx=5, pady=5)\n\n    def hit(self):\n        self.sound.play()\n        self.button.config(bg=self.color)\n        window.after(150, self.reset)\n\n    def reset(self):\n        self.button.config(bg="gray")\n\n\nkick = Pad("Бочка", "sounds/kick.wav", "1", "#833AE0", 0, 0)\nsnare = Pad("Малый", "sounds/snare.wav", "2", "#FF7842", 0, 1)\n\nwindow.mainloop()`,
+          output: "Пэд при ударе вспыхивает своим цветом и через 150 мс гаснет обратно в серый",
+          explanation:
+            "Шаг 3. Вспышка! Пэд запоминает self.color, красит свою кнопку при ударе и через window.after(150, self.reset) возвращает серый цвет (тоже без скобок).",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Драм-машина ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Pad:\n    def __init__(self, name, file, key, color, row, column):\n        self.sound = pygame.mixer.Sound(file)\n        self.key = key\n        self.color = color\n        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),\n                                width=8, height=3, bg="gray", command=self.hit)\n        self.button.grid(row=row, column=column, padx=5, pady=5)\n\n    def hit(self):\n        self.sound.play()\n        self.button.config(bg=self.color)\n        window.after(150, self.reset)\n\n    def reset(self):\n        self.button.config(bg="gray")\n\n\npads = [\n    Pad("Бочка", "sounds/kick.wav", "1", "#833AE0", 0, 0),\n    Pad("Малый", "sounds/snare.wav", "2", "#FF7842", 0, 1),\n    Pad("Хэт", "sounds/hat.wav", "3", "#38BD60", 0, 2),\n    Pad("Хлопок", "sounds/clap.wav", "4", "#FA82CC", 0, 3),\n    Pad("Том", "sounds/tom.wav", "5", "#5E5EFF", 1, 0),\n    Pad("Тарелка", "sounds/crash.wav", "6", "#FFDC40", 1, 1),\n    Pad("Перкуссия", "sounds/perc.wav", "7", "#833AE0", 1, 2),\n    Pad("Бас", "sounds/bass.wav", "8", "#FF7842", 1, 3),\n]\n\nwindow.mainloop()`,
+          output: "Сетка 2×4 из восьми цветных барабанных пэдов в окне",
+          explanation:
+            "Шаг 4. Восемь пэдов списком! Объекты можно хранить в списке, как числа или строки. Было бы 16 функций — стал один класс и восемь строк.",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Драм-машина ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Pad:\n    def __init__(self, name, file, key, color, row, column):\n        self.sound = pygame.mixer.Sound(file)\n        self.key = key\n        self.color = color\n        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),\n                                width=8, height=3, bg="gray", command=self.hit)\n        self.button.grid(row=row, column=column, padx=5, pady=5)\n\n    def hit(self):\n        self.sound.play()\n        self.button.config(bg=self.color)\n        window.after(150, self.reset)\n\n    def reset(self):\n        self.button.config(bg="gray")\n\n\npads = [\n    Pad("Бочка", "sounds/kick.wav", "1", "#833AE0", 0, 0),\n    Pad("Малый", "sounds/snare.wav", "2", "#FF7842", 0, 1),\n    Pad("Хэт", "sounds/hat.wav", "3", "#38BD60", 0, 2),\n    Pad("Хлопок", "sounds/clap.wav", "4", "#FA82CC", 0, 3),\n    Pad("Том", "sounds/tom.wav", "5", "#5E5EFF", 1, 0),\n    Pad("Тарелка", "sounds/crash.wav", "6", "#FFDC40", 1, 1),\n    Pad("Перкуссия", "sounds/perc.wav", "7", "#833AE0", 1, 2),\n    Pad("Бас", "sounds/bass.wav", "8", "#FF7842", 1, 3),\n]\n\n\ndef on_key(event):\n    for pad in pads:\n        if pad.key == event.char:\n            pad.hit()\n\n\nwindow.bind("<Key>", on_key)\nwindow.mainloop()`,
+          output: "Драм-машина готова! Цифры 1–8 на клавиатуре и клики мышкой бьют звуками и мигают",
+          explanation:
+            "Шаг 5. Итоговый код с клавиатурой! window.bind(\"<Key>\", on_key) ловит нажатия клавиш, сравнивает event.char с pad.key и вызывает pad.hit() (уже со скобками, потому что бьём прямо сейчас). Используем цифры, чтобы не зависеть от русской раскладки!",
+        },
+      ],
+      mistakes: [
+        {
+          wrongCode: `self.button = tk.Button(window, text=name, command=self.hit())`,
+          error: "Звук ударяет один раз при запуске, а кнопка потом молчит",
+          fixedCode: `self.button = tk.Button(window, text=name, command=self.hit)`,
+          explanation:
+            "Скобки вызвали метод сразу при создании кнопки, и в command ушёл результат None.",
+        },
+        {
+          wrongCode: `def __init__(self, name, file, key, color, row, column):\n    sound = pygame.mixer.Sound(file)\n\ndef hit(self):\n    self.sound.play()`,
+          error: "AttributeError: 'Pad' object has no attribute 'sound'",
+          fixedCode: `def __init__(self, name, file, key, color, row, column):\n    self.sound = pygame.mixer.Sound(file)\n\ndef hit(self):\n    self.sound.play()`,
+          explanation:
+            "Без self. переменная sound — обычная локальная переменная внутри __init__. Она исчезает, как только __init__ завершился.",
+        },
+        {
+          wrongCode: `def hit():\n    self.sound.play()`,
+          error: "TypeError: hit() takes 0 positional arguments but 1 was given",
+          fixedCode: `def hit(self):\n    self.sound.play()`,
+          explanation:
+            "Python сам передаёт объект первым аргументом в метод, поэтому первым параметром всегда нужно принимать self.",
+        },
+        {
+          wrongCode: `Pad("Бочка", "sounds/kick.wav", "1", 0, 0)`,
+          error: "TypeError: __init__() missing 1 required positional argument: 'column'",
+          fixedCode: `Pad("Бочка", "sounds/kick.wav", "1", "#833AE0", 0, 0)`,
+          explanation:
+            "Забыли цвет! Python раздал аргументы по порядку: 0 ушёл в color, второй 0 — в row, а для column ничего не осталось.",
+        },
+        {
+          wrongCode: `# Запуск программы не из той папки, где лежит sounds/\nsound = pygame.mixer.Sound("sounds/kick.wav")`,
+          error: "FileNotFoundError: No file 'sounds/kick.wav' found in working directory",
+          fixedCode: `# На компьютере открывай в VS Code именно папку урока со звуками\nsound = pygame.mixer.Sound("sounds/kick.wav")`,
+          explanation:
+            "При запуске на компьютере папка sounds со звуками должна лежать рядом со скриптом, а в VS Code должна быть открыта сама папка урока.",
+        },
+      ],
+      quiz: [
+        {
+          code: `# Найди баг! Какая из кнопок сработает при запуске и останется мёртвой?\nbtn1 = tk.Button(window, text="1", command=pad1.hit)\nbtn2 = tk.Button(window, text="2", command=pad2.hit())`,
+          options: [
+            "btn2 ударит при запуске и замолчит; btn1 будет работать правильно",
+            "btn1 ударит при запуске, а btn2 будет работать",
+            "Обе кнопки будут работать одинаково",
+            "Программа сразу выдаст SyntaxError",
+          ],
+          correct: 0,
+          explanation:
+            "Скобки в command=pad2.hit() вызывают метод сразу во время создания кнопки и передают в command значение None.",
+        },
+        {
+          code: `# Что выведет программа?\n# pad1 нажали 3 раза, а pad2 — 1 раз. У каждого в __init__ есть self.count = 0.\nprint(pad1.count, pad2.count)`,
+          options: ["3 1", "4 4", "1 3", "0 0"],
+          correct: 0,
+          explanation:
+            "У каждого объекта Pad своё собственное хранилище self.count, поэтому счётчики не перемешиваются.",
+        },
+        {
+          code: `class Pad:\n    def __init__(self, key):\n        key = key\n\np = Pad("1")\nprint(p.key)`,
+          options: [
+            "AttributeError: 'Pad' object has no attribute 'key'",
+            "1",
+            "None",
+            "key",
+          ],
+          correct: 0,
+          explanation:
+            "Без self.key = key значение не сохраняется в объекте и исчезает после завершения __init__.",
+        },
+      ],
+      cheatsheet: [
+        "class Pad: — объявление класса (чертежа), имя всегда с большой буквы",
+        "def __init__(self, ...): — конструктор, вызывается при создании Pad(...)",
+        "self.sound = ... — сохранение данных внутри конкретного объекта",
+        "command=self.hit — передача метода кнопке БЕЗ круглых скобок",
+        "pygame.mixer.Sound(file) и sound.play() — короткие звуки, играют одновременно",
+        "window.bind('<Key>', on_key) — ловит нажатия клавиш, символ лежит в event.char",
+      ],
+    },
+    exercise: {
+      task: "Собери драм-машину ProTeam Labs на одном классе Pad:\n1. Создай окно window = tk.Tk() с заголовком \"Драм-машина ProTeam Labs\" и тёмным фоном window.config(bg=\"#2B2B3D\")\n2. Объяви класс Pad с методами:\n   - __init__(self, name, file, key, color, row, column): сохраняет self.sound = pygame.mixer.Sound(file), self.key = key, self.color = color, создаёт кнопку self.button = tk.Button(window, text=name + \"\\n\" + key, font=(\"Arial\", 13), width=8, height=3, bg=\"gray\", command=self.hit) и ставит её в grid(row=row, column=column, padx=5, pady=5)\n   - hit(self): вызывает self.sound.play(), красит кнопку self.button.config(bg=self.color) и планирует window.after(150, self.reset)\n   - reset(self): возвращает цвет self.button.config(bg=\"gray\")\n3. Создай список pads из 8 пэдов (2 строки по 4 столбца, клавиши \"1\"–\"8\", файлы sounds/kick.wav, snare.wav, hat.wav, clap.wav, tom.wav, crash.wav, perc.wav, bass.wav)\n4. Напиши on_key(event): перебирает pads и при pad.key == event.char вызывает pad.hit()\n5. Привяжи window.bind(\"<Key>\", on_key) и вызови window.mainloop()!\n\nБонус (+SP после сдачи): попробуй добавить кнопку «Тишина» (command=pygame.mixer.stop), счётчик ударов self.count или ползунок громкости Scale!",
+      requirements: [
+        "Объявить класс Pad с методами __init__, hit и reset",
+        "Сохранять в self: self.sound, self.key, self.color и self.button",
+        "Передать command=self.hit и window.after(150, self.reset) без скобок",
+        "Создать список pads из 8 объектов Pad на сетке 2×4",
+        "Реализовать on_key(event) с проверкой event.char и window.bind('<Key>', on_key)",
+      ],
+      starterCode: `import tkinter as tk
+import pygame
+
+pygame.mixer.init()
+
+window = tk.Tk()
+window.title("Драм-машина ProTeam Labs")
+window.config(bg="#2B2B3D")
+
+# 1. Объяви класс Pad (методы __init__, hit, reset):
+
+
+# 2. Создай список pads из 8 пэдов (клавиши "1".."8"):
+
+
+# 3. Напиши on_key(event) и привяжи window.bind("<Key>", on_key):
+
+
+window.mainloop()
+`,
+      hint: `class Pad:\n    def __init__(self, name, file, key, color, row, column):\n        self.sound = pygame.mixer.Sound(file)\n        self.key = key\n        self.color = color\n        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),\n                                width=8, height=3, bg="gray", command=self.hit)\n        self.button.grid(row=row, column=column, padx=5, pady=5)\n\n    def hit(self):\n        self.sound.play()\n        self.button.config(bg=self.color)\n        window.after(150, self.reset)\n\n    def reset(self):\n        self.button.config(bg="gray")`,
+      solution: `import tkinter as tk
+import pygame
+
+pygame.mixer.init()
+
+window = tk.Tk()
+window.title("Драм-машина ProTeam Labs")
+window.config(bg="#2B2B3D")
+
+
+class Pad:
+    def __init__(self, name, file, key, color, row, column):
+        self.sound = pygame.mixer.Sound(file)
+        self.key = key
+        self.color = color
+        self.button = tk.Button(window, text=name + "\\n" + key, font=("Arial", 13),
+                                width=8, height=3, bg="gray", command=self.hit)
+        self.button.grid(row=row, column=column, padx=5, pady=5)
+
+    def hit(self):
+        self.sound.play()
+        self.button.config(bg=self.color)
+        window.after(150, self.reset)
+
+    def reset(self):
+        self.button.config(bg="gray")
+
+
+pads = [
+    Pad("Бочка", "sounds/kick.wav", "1", "#833AE0", 0, 0),
+    Pad("Малый", "sounds/snare.wav", "2", "#FF7842", 0, 1),
+    Pad("Хэт", "sounds/hat.wav", "3", "#38BD60", 0, 2),
+    Pad("Хлопок", "sounds/clap.wav", "4", "#FA82CC", 0, 3),
+    Pad("Том", "sounds/tom.wav", "5", "#5E5EFF", 1, 0),
+    Pad("Тарелка", "sounds/crash.wav", "6", "#FFDC40", 1, 1),
+    Pad("Перкуссия", "sounds/perc.wav", "7", "#833AE0", 1, 2),
+    Pad("Бас", "sounds/bass.wav", "8", "#FF7842", 1, 3),
+]
+
+
+def on_key(event):
+    for pad in pads:
+        if pad.key == event.char:
+            pad.hit()
+
+
+window.bind("<Key>", on_key)
+window.mainloop()`,
+      tests: [{ inputs: [], expected: "OK_DRUM_MACHINE" }],
+      codeCheck: (cleanCode) => {
+        if (!/\bclass\s+Pad\b/.test(cleanCode))
+          return { passed: false, message: "Объяви класс Pad: class Pad:" };
+        if (!/\bdef\s+__init__\s*\(\s*self\b/.test(cleanCode))
+          return { passed: false, message: "Добавь метод __init__(self, ...) в класс Pad." };
+        if (!/\bdef\s+hit\s*\(\s*self\b/.test(cleanCode))
+          return { passed: false, message: "Добавь метод hit(self) в класс Pad." };
+        if (!/pygame\.mixer\.Sound\s*\(/.test(cleanCode))
+          return { passed: false, message: "Загружай звук через pygame.mixer.Sound(file)." };
+        if (!/window\.bind\s*\(/.test(cleanCode))
+          return { passed: false, message: "Привяжи обработку клавиш через window.bind('<Key>', on_key)." };
+        return null;
+      },
+      testCode: `
+import tkinter
+assert "Pad" in globals(), "Класс Pad не найден"
+assert "pads" in globals() and isinstance(pads, list), "Создай список pads"
+assert len(pads) >= 8, "В списке pads должно быть не меньше 8 пэдов"
+buttons = [w for w in tkinter.WIDGETS if w.kind == "Button"]
+assert len(buttons) >= 8, "В окне должно быть не меньше 8 кнопок"
+p0 = pads[0]
+assert hasattr(p0, "sound") and hasattr(p0, "key") and hasattr(p0, "color") and hasattr(p0, "button"), "В __init__ сохрани self.sound, self.key, self.color и self.button"
+before_cnt = p0.sound._play_count
+p0.hit()
+assert p0.sound._play_count > before_cnt, "Метод hit() должен вызывать self.sound.play()"
+assert p0.button.cget("bg") == p0.color, "Метод hit() должен красить кнопку в self.color"
+p0.reset()
+assert p0.button.cget("bg") == "gray", "Метод reset() должен возвращать цвет 'gray'"
+root_tk = [w for w in tkinter.WIDGETS if w.kind == "Tk"][0]
+assert "bind:<Key>" in root_tk.opts, "Привяжи клавиатуру через window.bind('<Key>', on_key)"
+p1 = pads[1]
+cnt1 = p1.sound._play_count
+root_tk.opts["bind:<Key>"](tkinter.Event(char=p1.key))
+assert p1.sound._play_count > cnt1, "Нажатие клавиши из pad.key должно вызывать pad.hit()"
+print("OK_DRUM_MACHINE")
+`,
+      validate: (code, output) => {
+        if (output.includes("OK_DRUM_MACHINE")) {
+          return {
+            passed: true,
+            message: "Ачивка «Восемь по цене одного» получена! Драм-машина на одном классе Pad работает идеально! 🥁🎶",
+          };
+        }
+        return {
+          passed: false,
+          message: "Проверь класс Pad, список из 8 пэдов и привязку клавиш window.bind('<Key>', on_key).",
+        };
+      },
+    },
+  },
+
+  // ==========================================
+  // УРОК 10: СЕКВЕНСОР
+  // ==========================================
+  {
+    id: "tkinter_sequencer",
+    moduleId: "module_tkinter",
+    title: "10. Секвенсор: таймер window.after(), сетка 4×8 и кнопка Старт/Стоп",
+    icon: "Repeat",
+    shortDesc: "Ритм играет сам по кругу: 32 клетки одного класса Step и будильник tick()",
+    theory: {
+      story: {
+        letter:
+          "ВХОДЯЩЕЕ СООБЩЕНИЕ\nОТПРАВИТЕЛЬ: ЗАКАЗЧИК\n\nДрам-машина отличная, саунд-дизайнер не отходит от неё.\n\nНо пока он стучит ритм, руки заняты. Хочет, чтобы ритм играл сам: расставил удары по клеткам, нажал «Старт», и машина играет по кругу.",
+        task: "Сетка клеток 4×8, бегунок и кнопка «Старт / Стоп».",
+        quotes: [
+          {
+            speaker: "Алёна, продюсер",
+            text: "Задача на день: сетка клеток, бегунок и кнопка «Старт».",
+          },
+          {
+            speaker: "Макс, техлид",
+            text: "Секвенсор — та же музыкальная шкатулка. Включённая клетка — штырёк, бегунок — барабан.",
+          },
+          {
+            speaker: "Ева, QA-инженер",
+            text: "Окно белое и не отвечает. Программа не сломалась, она занята циклом while True и не успевает нарисовать окно.",
+          },
+          {
+            speaker: "Макс, техлид",
+            text: "after — это будильник. Не «жди 250 миллисекунд», а «напомни мне через 250».",
+          },
+          {
+            speaker: "Ева, QA-инженер",
+            text: "Не вызывайте tick() второй раз в кнопке. Будильников станет два, ритм ускорится вдвое.",
+          },
+          {
+            speaker: "Алёна, продюсер",
+            text: "Будильник, который заводит сам себя. Запомните его: в играх так устроено вообще всё.",
+          },
+        ],
+      },
+      summary:
+        "Секвенсор — это сетка 4×8: каждая строка отвечает за инструмент (бочка, малый, хэт, хлопок), а каждый столбец (0–7) — за момент времени. Бегунок идёт по столбцам слева направо, играет всё, что включено в текущем столбце, и дойдя до конца начинает сначала.\n\nКлеток целых 32, а класс один — Step! Вспомним правило: объект нужен, когда у данных есть поведение. Клетка хранит звук, цвет, номер столбца и состояние self.on (True/False), а умеет две вещи: переключаться в toggle() через self.on = not self.on и играть звук в play(), только если включена.\n\nГлавная загадка урока: как запускать шаг каждые 250 миллисекунд? Если написать бесконечный цикл while True и time.sleep(0.25), окно станет белым и зависнет. Почему? Потому что window.mainloop() — это уже бесконечный цикл, который рисует кнопки и ловит клики. Пока крутится наш while True, до mainloop() очередь никогда не доходит.\n\nРешение — будильник window.after(250, tick): «не жди, а напомни мне через 250 мс вызвать tick». В конце функции tick() сама заводит себя заново: window.after(250, tick). Получается цикл, который совсем не мешает окну!\n\nЧтобы ритм можно было ставить на паузу, вводим флаг playing = False и кнопку «Старт / Стоп». Очень важно: window.after(250, tick) должен стоять ВНЕ условия if playing:, иначе при нажатии «Стоп» будильник перестанет перезаводиться, и кнопка «Старт» больше ничего не запустит. Саму tick() вызываем ровно один раз перед mainloop().\n\nМинутка истории: в 1796 году в Женеве придумали музыкальную шкатулку — барабан со штырьками цеплял язычки и проигрывал мелодию по кругу. В FL Studio, GarageBand, игровых движках (где каждый кадр — такой же tick) и таймерах автосохранения всё устроено по тому же принципу!",
+      keyRule:
+        "window.after(250, tick) ставь ВНЕ условия if playing:, чтобы будильник не умирал на паузе! А функцию tick() вызывай только один раз перед window.mainloop() — никогда не вызывай её внутри start_stop().",
+      sections: [
+        {
+          heading: "Клетка Step и переключатель на not",
+          text: "self.on = not self.on мгновенно переворачивает состояние клетки (False -> True -> False). Метод play(self) играет звук только при self.on == True.",
+          codeExample: {
+            title: "Безопасный цикл на window.after",
+            code: `import tkinter as tk\n\nwindow = tk.Tk()\n\ndef tick():\n    print("тик")\n    window.after(250, tick)\n\ntick()\nwindow.mainloop()`,
+            explanation:
+              "window.after(250, tick) просит Tkinter вызвать tick через 250 мс, оставляя окно отзывчивым.",
+          },
+        },
+        {
+          heading: "Сетка 4×8 и кнопка Старт/Стоп",
+          text: "Четыре цикла по range(8) создают 32 клетки. В tick() проверяем if playing: и играем клетки текущего столбца current, а window.after(250, tick) ставим после блока if.",
+        },
+      ],
+      steps: [
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Секвенсор ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Step:\n    def __init__(self, color, row, column):\n        self.color = color\n        self.column = column\n        self.on = False\n        self.button = tk.Button(window, width=3, height=2, bg="gray", command=self.toggle)\n        self.button.grid(row=row, column=column, padx=3, pady=3)\n\n    def toggle(self):\n        self.on = not self.on\n        if self.on:\n            self.button.config(bg=self.color, text="●")\n        else:\n            self.button.config(bg="gray", text="")\n\n\nsteps = []\nfor column in range(8):\n    steps.append(Step("#833AE0", 0, column))\n\nwindow.mainloop()`,
+          output: "Одна строка из 8 клеток; клик включает и выключает точку «●» и цвет",
+          explanation:
+            "Шаг 1. Одна строка клеток. self.on = not self.on — переключатель, а символ «●» виден на любой системе, даже если Mac не перекрашивает кнопку.",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Секвенсор ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Step:\n    def __init__(self, sound, color, row, column):\n        self.sound = sound\n        self.color = color\n        self.column = column\n        self.on = False\n        self.button = tk.Button(window, width=3, height=2, bg="gray", command=self.toggle)\n        self.button.grid(row=row, column=column, padx=3, pady=3)\n\n    def toggle(self):\n        self.on = not self.on\n        if self.on:\n            self.button.config(bg=self.color, text="●")\n        else:\n            self.button.config(bg="gray", text="")\n\n    def play(self):\n        if self.on:\n            self.sound.play()\n\n\nkick = pygame.mixer.Sound("sounds/kick.wav")\nsnare = pygame.mixer.Sound("sounds/snare.wav")\nhat = pygame.mixer.Sound("sounds/hat.wav")\nclap = pygame.mixer.Sound("sounds/clap.wav")\n\nsteps = []\n\nfor column in range(8):\n    steps.append(Step(kick, "#833AE0", 0, column))\n\nfor column in range(8):\n    steps.append(Step(snare, "#FF7842", 1, column))\n\nfor column in range(8):\n    steps.append(Step(hat, "#38BD60", 2, column))\n\nfor column in range(8):\n    steps.append(Step(clap, "#FA82CC", 3, column))\n\nwindow.mainloop()`,
+          output: "Сетка 4×8: фиолетовая бочка, оранжевый малый, зелёный хэт и розовый хлопок",
+          explanation:
+            "Шаг 2. Сетка 4×8 со звуками. Все 8 клеток строки получают один и тот же загруженный объект Sound. (Для продвинутых: эти 4 цикла можно заменить одним вложенным циклом for row in range(4): for column in range(8):).",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Секвенсор ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Step:\n    def __init__(self, sound, color, row, column):\n        self.sound = sound\n        self.color = color\n        self.column = column\n        self.on = False\n        self.button = tk.Button(window, width=3, height=2, bg="gray", command=self.toggle)\n        self.button.grid(row=row, column=column, padx=3, pady=3)\n\n    def toggle(self):\n        self.on = not self.on\n        if self.on:\n            self.button.config(bg=self.color, text="●")\n        else:\n            self.button.config(bg="gray", text="")\n\n    def play(self):\n        if self.on:\n            self.sound.play()\n\n\nkick = pygame.mixer.Sound("sounds/kick.wav")\nsnare = pygame.mixer.Sound("sounds/snare.wav")\nhat = pygame.mixer.Sound("sounds/hat.wav")\nclap = pygame.mixer.Sound("sounds/clap.wav")\n\nsteps = []\n\nfor column in range(8):\n    steps.append(Step(kick, "#833AE0", 0, column))\n\nfor column in range(8):\n    steps.append(Step(snare, "#FF7842", 1, column))\n\nfor column in range(8):\n    steps.append(Step(hat, "#38BD60", 2, column))\n\nfor column in range(8):\n    steps.append(Step(clap, "#FA82CC", 3, column))\n\ncurrent = 0\n\n\ndef tick():\n    global current\n    for step in steps:\n        if step.column == current:\n            step.play()\n\n    current = current + 1\n    if current == 8:\n        current = 0\n    window.after(250, tick)\n\n\ntick()\nwindow.mainloop()`,
+          output: "Включите несколько клеток — и ритм сразу заиграет по кругу каждые 250 мс!",
+          explanation:
+            "Шаг 3. Бегунок! current хранит номер текущего столбца (0..7). На каждом тике играют только клетки с step.column == current, затем current сдвигается и на 8 сбрасывается в 0.",
+        },
+        {
+          code: `import tkinter as tk\nimport pygame\n\npygame.mixer.init()\n\nwindow = tk.Tk()\nwindow.title("Секвенсор ProTeam Labs")\nwindow.config(bg="#2B2B3D")\n\n\nclass Step:\n    def __init__(self, sound, color, row, column):\n        self.sound = sound\n        self.color = color\n        self.column = column\n        self.on = False\n        self.button = tk.Button(window, width=3, height=2, bg="gray", command=self.toggle)\n        self.button.grid(row=row, column=column, padx=3, pady=3)\n\n    def toggle(self):\n        self.on = not self.on\n        if self.on:\n            self.button.config(bg=self.color, text="●")\n        else:\n            self.button.config(bg="gray", text="")\n\n    def play(self):\n        if self.on:\n            self.sound.play()\n\n\nkick = pygame.mixer.Sound("sounds/kick.wav")\nsnare = pygame.mixer.Sound("sounds/snare.wav")\nhat = pygame.mixer.Sound("sounds/hat.wav")\nclap = pygame.mixer.Sound("sounds/clap.wav")\n\nsteps = []\n\nfor column in range(8):\n    steps.append(Step(kick, "#833AE0", 0, column))\n\nfor column in range(8):\n    steps.append(Step(snare, "#FF7842", 1, column))\n\nfor column in range(8):\n    steps.append(Step(hat, "#38BD60", 2, column))\n\nfor column in range(8):\n    steps.append(Step(clap, "#FA82CC", 3, column))\n\ncurrent = 0\nplaying = False\n\n\ndef tick():\n    global current\n    if playing:\n        for step in steps:\n            if step.column == current:\n                step.play()\n\n        current = current + 1\n        if current == 8:\n            current = 0\n    window.after(250, tick)\n\n\ndef start_stop():\n    global playing\n    playing = not playing\n    if playing:\n        start_button.config(text="Стоп")\n    else:\n        start_button.config(text="Старт")\n\n\nstart_button = tk.Button(window, text="Старт", font=("Arial", 13), command=start_stop)\nstart_button.grid(row=5, column=0, columnspan=8, pady=10)\n\ntick()\nwindow.mainloop()`,
+          output: "Готовый секвенсор! «Старт» запускает ритм, «Стоп» останавливает, повторный «Старт» продолжает с того же места",
+          explanation:
+            "Шаг 4. Итоговый код со Старт/Стоп! Кнопка растянута через columnspan=8 на всю ширину сетки. window.after(250, tick) стоит вне if playing:, поэтому будильник не останавливается на паузе.",
+        },
+      ],
+      mistakes: [
+        {
+          wrongCode: `while True:\n    tick()\n    time.sleep(0.25)`,
+          error: "Окно зависло, белое и не отвечает на клики",
+          fixedCode: `def tick():\n    # шаг секвенсора\n    window.after(250, tick)\n\ntick()\nwindow.mainloop()`,
+          explanation:
+            "Бесконечный цикл while True не пускает программу до window.mainloop(), и окно не может ни нарисоваться, ни обработать клики.",
+        },
+        {
+          wrongCode: `def tick():\n    global current\n    for step in steps:\n        if step.column == current:\n            step.play()\n    current = current + 1\n    if current == 8:\n        current = 0`,
+          error: "Сыграл один шаг при запуске — и полная тишина",
+          fixedCode: `def tick():\n    global current\n    for step in steps:\n        if step.column == current:\n            step.play()\n    current = current + 1\n    if current == 8:\n        current = 0\n    window.after(250, tick)`,
+          explanation:
+            "Нет будильника на следующий шаг. В самом конце tick() обязательно нужна строка window.after(250, tick).",
+        },
+        {
+          wrongCode: `def tick():\n    global current\n    if playing:\n        for step in steps:\n            if step.column == current:\n                step.play()\n        current = (current + 1) % 8\n        window.after(250, tick)`,
+          error: "После нажатия «Стоп» кнопка «Старт» больше не запускает ритм",
+          fixedCode: `def tick():\n    global current\n    if playing:\n        for step in steps:\n            if step.column == current:\n                step.play()\n        current = (current + 1) % 8\n    window.after(250, tick)`,
+          explanation:
+            "window.after попал внутрь if playing:. Когда playing стал False, будильник не завёлся, и цикл умер навсегда.",
+        },
+        {
+          wrongCode: `def start_stop():\n    global playing\n    playing = not playing\n    tick()`,
+          error: "После каждого нажатия «Старт» ритм ускоряется вдвое!",
+          fixedCode: `def start_stop():\n    global playing\n    playing = not playing\n    # tick() НЕ вызываем здесь — он уже тикает сам!`,
+          explanation:
+            "Каждый вызов tick() заводит ещё один параллельный будильник. tick() нужно вызвать ровно один раз в конце программы.",
+        },
+        {
+          wrongCode: `if current == 9:\n    current = 0\nlamps[current].config(bg="#FFDC40")`,
+          error: "IndexError: list index out of range",
+          fixedCode: `if current == 8:\n    current = 0\nlamps[current].config(bg="#FFDC40")`,
+          explanation:
+            "Столбцов 8, их индексы от 0 до 7. Когда current доходит до 8, такого столбца уже нет — сбрасывать нужно на 8.",
+        },
+      ],
+      quiz: [
+        {
+          code: `def tick():\n    global current\n    if playing:\n        current = (current + 1) % 8\n        window.after(250, tick)\n# Что произойдёт, если нажать «Стоп», а потом снова «Старт»?`,
+          options: [
+            "Секвенсор остановится и больше не запустится",
+            "Ритм ускорится вдвое",
+            "Всё продолжит работать нормально",
+            "Возникнет ошибка ZeroDivisionError",
+          ],
+          correct: 0,
+          explanation:
+            "Пока playing == False, условие не срабатывает и window.after не вызывается. Цепочка будильников обрывается навсегда.",
+        },
+        {
+          code: `def start_stop():\n    global playing\n    playing = not playing\n    tick()\n# Почему это ошибка, если tick() уже вызван перед mainloop()?`,
+          options: [
+            "Заведётся второй будильник, и ритм будет играть в 2 раза быстрее",
+            "Окно сразу закроется",
+            "Кнопка перестанет менять текст",
+            "Звуки перестанут проигрываться",
+          ],
+          correct: 0,
+          explanation:
+            "Каждый вызов tick() запускает свою цепочку window.after. Через два нажатия «Старт» будильников станет уже два, потом три!",
+        },
+        {
+          code: `on = False\nfor i in range(3):\n    on = not on\nprint(on)`,
+          options: ["True", "False", "None", "3"],
+          correct: 0,
+          explanation:
+            "Шаг 1: False -> True. Шаг 2: True -> False. Шаг 3: False -> True.",
+        },
+      ],
+      cheatsheet: [
+        "class Step: — один класс для всех 32 клеток сетки 4×8",
+        "self.on = not self.on — переключатель True/False в одну строку",
+        "for column in range(8): steps.append(Step(...)) — создание строки клеток циклом",
+        "global current — нужно внутри функции, которая перезаписывает current",
+        "window.after(250, tick) — будильник без зависания; ставить ВНЕ if playing:",
+        "tick() вызываем один раз в самом конце перед window.mainloop()",
+      ],
+    },
+    exercise: {
+      task: "Собери пошаговый секвенсор 4×8 ProTeam Labs:\n1. Создай окно window = tk.Tk() с заголовком \"Секвенсор ProTeam Labs\" и фоном window.config(bg=\"#2B2B3D\")\n2. Объяви класс Step:\n   - __init__(self, sound, color, row, column): сохраняет self.sound, self.color, self.column, self.on = False, создаёт self.button = tk.Button(window, width=3, height=2, bg=\"gray\", command=self.toggle) и размещает её через grid(row=row, column=column, padx=3, pady=3)\n   - toggle(self): переворачивает self.on = not self.on; если включена — bg=self.color, text=\"●\", иначе bg=\"gray\", text=\"\"\n   - play(self): если self.on, вызывает self.sound.play()\n3. Загрузи 4 звука (kick, snare, hat, clap) и циклами создай 32 клетки в списке steps (строки 0–3, столбцы 0–7)\n4. Создай переменные current = 0 и playing = False\n5. Напиши tick(): global current; если playing, проиграй все клетки с step.column == current, сдвинь current (при 8 сбрось в 0); и ВНЕ if playing: вызови window.after(250, tick)\n6. Напиши start_stop() и создай кнопку start_button = tk.Button(window, text=\"Старт\", font=(\"Arial\", 13), command=start_stop) на grid(row=5, column=0, columnspan=8, pady=10)\n7. Вызови tick() один раз и window.mainloop()!\n\nБонус (+SP после сдачи): добавь кнопку «Очистить», жёлтые лампочки-индикаторы под сеткой (row=4) или ползунок скорости Scale(from_=100, to=500)!",
+      requirements: [
+        "Объявить класс Step с методами __init__, toggle и play",
+        "Создать 32 клетки (сетка 4×8) в списке steps",
+        "Создать глобальные переменные current = 0 и playing = False",
+        "Реализовать tick() с window.after(250, tick) ВНЕ блока if playing:",
+        "Реализовать start_stop() и кнопку Старт с columnspan=8",
+        "Вызвать tick() один раз перед window.mainloop()",
+      ],
+      starterCode: `import tkinter as tk
+import pygame
+
+pygame.mixer.init()
+
+window = tk.Tk()
+window.title("Секвенсор ProTeam Labs")
+window.config(bg="#2B2B3D")
+
+# 1. Объяви класс Step (__init__, toggle, play):
+
+
+kick = pygame.mixer.Sound("sounds/kick.wav")
+snare = pygame.mixer.Sound("sounds/snare.wav")
+hat = pygame.mixer.Sound("sounds/hat.wav")
+clap = pygame.mixer.Sound("sounds/clap.wav")
+
+steps = []
+
+# 2. Создай сетку 4x8 в списке steps:
+
+
+current = 0
+playing = False
+
+# 3. Напиши функции tick() и start_stop(), создай start_button:
+
+
+# 4. Запусти tick() и window.mainloop():
+`,
+      hint: `def tick():\n    global current\n    if playing:\n        for step in steps:\n            if step.column == current:\n                step.play()\n        current = current + 1\n        if current == 8:\n            current = 0\n    window.after(250, tick)`,
+      solution: `import tkinter as tk
+import pygame
+
+pygame.mixer.init()
+
+window = tk.Tk()
+window.title("Секвенсор ProTeam Labs")
+window.config(bg="#2B2B3D")
+
+
+class Step:
+    def __init__(self, sound, color, row, column):
+        self.sound = sound
+        self.color = color
+        self.column = column
+        self.on = False
+        self.button = tk.Button(window, width=3, height=2, bg="gray", command=self.toggle)
+        self.button.grid(row=row, column=column, padx=3, pady=3)
+
+    def toggle(self):
+        self.on = not self.on
+        if self.on:
+            self.button.config(bg=self.color, text="●")
+        else:
+            self.button.config(bg="gray", text="")
+
+    def play(self):
+        if self.on:
+            self.sound.play()
+
+
+kick = pygame.mixer.Sound("sounds/kick.wav")
+snare = pygame.mixer.Sound("sounds/snare.wav")
+hat = pygame.mixer.Sound("sounds/hat.wav")
+clap = pygame.mixer.Sound("sounds/clap.wav")
+
+steps = []
+
+for column in range(8):
+    steps.append(Step(kick, "#833AE0", 0, column))
+
+for column in range(8):
+    steps.append(Step(snare, "#FF7842", 1, column))
+
+for column in range(8):
+    steps.append(Step(hat, "#38BD60", 2, column))
+
+for column in range(8):
+    steps.append(Step(clap, "#FA82CC", 3, column))
+
+current = 0
+playing = False
+
+
+def tick():
+    global current
+    if playing:
+        for step in steps:
+            if step.column == current:
+                step.play()
+
+        current = current + 1
+        if current == 8:
+            current = 0
+    window.after(250, tick)
+
+
+def start_stop():
+    global playing
+    playing = not playing
+    if playing:
+        start_button.config(text="Стоп")
+    else:
+        start_button.config(text="Старт")
+
+
+start_button = tk.Button(window, text="Старт", font=("Arial", 13), command=start_stop)
+start_button.grid(row=5, column=0, columnspan=8, pady=10)
+
+tick()
+window.mainloop()`,
+      tests: [{ inputs: [], expected: "OK_SEQUENCER" }],
+      codeCheck: (cleanCode) => {
+        if (!/\bclass\s+Step\b/.test(cleanCode))
+          return { passed: false, message: "Объяви класс Step: class Step:" };
+        if (!/\bdef\s+toggle\s*\(\s*self\b/.test(cleanCode))
+          return { passed: false, message: "Добавь метод toggle(self) в класс Step." };
+        if (!/\bdef\s+play\s*\(\s*self\b/.test(cleanCode))
+          return { passed: false, message: "Добавь метод play(self) в класс Step." };
+        if (!/\bdef\s+tick\s*\(\s*\)/.test(cleanCode))
+          return { passed: false, message: "Объяви функцию tick()." };
+        if (!/window\.after\s*\(/.test(cleanCode))
+          return { passed: false, message: "Используй window.after(..., tick) для цикла без зависания." };
+        if (!/\bdef\s+start_stop\s*\(\s*\)/.test(cleanCode))
+          return { passed: false, message: "Объяви функцию start_stop() для кнопки Старт/Стоп." };
+        return null;
+      },
+      testCode: `
+import tkinter
+assert "Step" in globals(), "Класс Step не найден"
+assert "steps" in globals() and isinstance(steps, list), "Создай список steps"
+assert len(steps) >= 32, "В сетке 4x8 должно быть 32 клетки"
+assert "playing" in globals(), "Создай переменную playing = False"
+assert "current" in globals(), "Создай переменную current = 0"
+assert callable(tick) and callable(start_stop), "Объяви функции tick() и start_stop()"
+s0 = steps[0]
+assert hasattr(s0, "sound") and hasattr(s0, "color") and hasattr(s0, "column") and hasattr(s0, "on") and hasattr(s0, "button"), "В Step.__init__ сохрани self.sound, self.color, self.column, self.on и self.button"
+was_on = s0.on
+s0.toggle()
+assert s0.on != was_on, "Метод toggle() должен переключать self.on"
+if not s0.on:
+    s0.toggle()
+assert "●" in s0.button.cget("text"), "Включённая клетка должна показывать '●'"
+start_stop()
+assert playing == True, "Первый вызов start_stop() должен ставить playing = True"
+current = 0
+cnt_before = s0.sound._play_count
+tick()
+assert s0.sound._play_count > cnt_before, "tick() должен проигрывать включённые клетки текущего столбца"
+assert current == 1, "tick() должен увеличивать current на 1"
+current = 7
+tick()
+assert current == 0, "После столбца 7 переменная current должна сбрасываться в 0"
+assert len(tkinter.AFTER_QUEUE) >= 1, "В конце tick() вызывай window.after(250, tick)"
+start_stop()
+assert playing == False, "Повторный вызов start_stop() должен ставить playing = False"
+print("OK_SEQUENCER")
+`,
+      validate: (code, output) => {
+        if (output.includes("OK_SEQUENCER")) {
+          return {
+            passed: true,
+            message: "Ачивка «Сам себе барабанщик» получена! Секвенсор 4×8 с будильником tick() готов к битам! 🎛️🥁",
+          };
+        }
+        return {
+          passed: false,
+          message: "Проверь класс Step, 32 клетки в steps, функции tick() и start_stop().",
+        };
+      },
+    },
+  },
 ];

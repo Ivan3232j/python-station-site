@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useId } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   AppWindow,
   X,
@@ -9,6 +9,7 @@ import {
   Square,
   Sparkles,
 } from "lucide-react";
+import { playDrumSound } from "../utils/audio";
 
 export interface TkWidgetData {
   pyWidget: any;
@@ -225,9 +226,37 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
     message: string;
   } | null>(null);
   const [seenLogCount, setSeenLogCount] = useState(0);
+  const timersRef = useRef<Set<number>>(new Set());
+  const aliveRef = useRef(isAlive);
+  aliveRef.current = isAlive;
+
+  const drainPygameSounds = useCallback(() => {
+    const Sk = typeof window !== "undefined" ? (window as any).Sk : null;
+    if (!Sk || !Sk.sysmodules) return;
+    try {
+      const pgMod = Sk.sysmodules.quick$lookup(new Sk.builtin.str("pygame"));
+      const queueObj = pgMod?.$d?.mixer?.$d?._sound_queue;
+      if (queueObj && Array.isArray(queueObj.v) && queueObj.v.length > 0) {
+        const items = queueObj.v.splice(0, queueObj.v.length);
+        for (const item of items) {
+          try {
+            const jsItem = Sk.ffi.remapToJs(item);
+            if (Array.isArray(jsItem) && jsItem.length >= 1) {
+              const file = String(jsItem[0]);
+              const vol = jsItem.length >= 2 ? Number(jsItem[1]) : 1.0;
+              playDrumSound(file, vol);
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  }, []);
+
+  const drainAfterQueueRef = useRef<() => void>(() => {});
 
   // Sync state helper
   const syncState = useCallback(() => {
+    drainPygameSounds();
     const st = extractTkinterState();
     setTkState(st);
 
@@ -237,11 +266,121 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
       setActiveDialog(latest);
       setSeenLogCount(st.log.length);
     }
-  }, [seenLogCount]);
+
+    if (aliveRef.current) {
+      drainAfterQueueRef.current();
+    }
+  }, [seenLogCount, drainPygameSounds]);
+
+  drainAfterQueueRef.current = () => {
+    const Sk = typeof window !== "undefined" ? (window as any).Sk : null;
+    if (!Sk || !Sk.sysmodules || !aliveRef.current) return;
+    try {
+      const tkMod = Sk.sysmodules.quick$lookup(new Sk.builtin.str("tkinter"));
+      const afterObj = tkMod?.$d?.AFTER_QUEUE;
+      if (!afterObj || !Array.isArray(afterObj.v) || afterObj.v.length === 0) {
+        return;
+      }
+      const queued = afterObj.v.splice(0, afterObj.v.length);
+      for (const entry of queued) {
+        if (!entry || !Array.isArray(entry.v) || entry.v.length < 2) continue;
+        const msRaw = entry.v[0];
+        const pyFunc = entry.v[1];
+        const pyArgsTuple = entry.v[2];
+        const delay = Math.max(16, Number(msRaw?.v !== undefined ? msRaw.v : msRaw) || 16);
+        const callArgs: any[] =
+          pyArgsTuple && Array.isArray(pyArgsTuple.v) ? pyArgsTuple.v : [];
+
+        const timerId = window.setTimeout(async () => {
+          timersRef.current.delete(timerId);
+          if (!aliveRef.current) return;
+          if (pyFunc && pyFunc !== Sk.builtin.none.none$) {
+            try {
+              await Sk.misceval.asyncToPromise(() =>
+                Sk.misceval.callsimOrSuspendArray(pyFunc, callArgs)
+              );
+            } catch (err) {
+              console.warn("Tkinter after callback error:", err);
+            }
+          }
+          if (aliveRef.current) {
+            syncState();
+            onRefresh?.();
+          }
+        }, delay);
+        timersRef.current.add(timerId);
+      }
+    } catch {}
+  };
 
   useEffect(() => {
+    if (!isAlive) {
+      timersRef.current.forEach((id) => window.clearTimeout(id));
+      timersRef.current.clear();
+      return;
+    }
     syncState();
-  }, [syncState]);
+    return () => {
+      timersRef.current.forEach((id) => window.clearTimeout(id));
+      timersRef.current.clear();
+    };
+  }, [isAlive, syncState]);
+
+  // Keyboard bindings: window.bind("<Key>", ...)
+  useEffect(() => {
+    if (!isAlive) return;
+    const onKeyDown = async (e: KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName || "").toUpperCase();
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") {
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const Sk = (window as any).Sk;
+      if (!Sk || !Sk.sysmodules) return;
+      const st = extractTkinterState();
+      const rootOpts = st.root?.pyWidget?.$d?.opts;
+      if (!rootOpts) return;
+
+      let bindFn: any = null;
+      try {
+        bindFn = Sk.abstr.objectGetItem(
+          rootOpts,
+          new Sk.builtin.str("bind:<Key>"),
+          true
+        );
+      } catch {}
+      if (!bindFn || bindFn === Sk.builtin.none.none$) return;
+
+      try {
+        const tkMod = Sk.sysmodules.quick$lookup(new Sk.builtin.str("tkinter"));
+        const eventCls = tkMod?.$d?.Event;
+        const charStr = e.key.length === 1 ? e.key : "";
+        let eventArg: any = null;
+        if (eventCls) {
+          eventArg = await Sk.misceval.asyncToPromise(() =>
+            Sk.misceval.callsimOrSuspendArray(eventCls, [
+              new Sk.builtin.str(charStr),
+              new Sk.builtin.str(e.key),
+            ])
+          );
+        } else {
+          eventArg = new Sk.builtin.object();
+        }
+        await Sk.misceval.asyncToPromise(() =>
+          Sk.misceval.callsimOrSuspendArray(bindFn, [eventArg])
+        );
+      } catch (err) {
+        console.warn("Tkinter Key bind error:", err);
+      } finally {
+        syncState();
+        onRefresh?.();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isAlive, syncState, onRefresh]);
 
   // If no Tk widgets exist, don't show preview
   if (!tkState.hasTk) {
@@ -487,7 +626,25 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
   };
 
   // Check if widgets use grid
-  const hasGridWidgets = widgets.some((w) => w.layoutType === "grid");
+  const topWidgets = widgets.filter(
+    (w) => !w.master || w.master === root?.pyWidget
+  );
+  const gridWidgets = topWidgets.filter((w) => w.layoutType === "grid");
+  const hasGridWidgets = gridWidgets.length > 0;
+  const maxGridCols = hasGridWidgets
+    ? Math.max(
+        1,
+        ...gridWidgets.map(
+          (w) =>
+            Number(w.layoutOpts.column ?? 0) +
+            Number(w.layoutOpts.columnspan ?? 1)
+        )
+      )
+    : 4;
+  if (!geoMatch && hasGridWidgets && maxGridCols >= 6) {
+    targetWidth = Math.max(targetWidth, Math.min(680, maxGridCols * 48 + 40));
+  }
+  const rootBg = root?.opts?.bg || root?.opts?.background || "#F0F0F0";
 
   // Render individual widget
   const renderWidget = (w: TkWidgetData) => {
@@ -529,6 +686,9 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
               ...wrapperStyle,
               color: fg || "#1F2937",
               backgroundColor: bg || "transparent",
+              minWidth: width,
+              minHeight: bg && !w.opts.text ? "10px" : undefined,
+              borderRadius: bg && !w.opts.text ? "4px" : undefined,
               ...fontStyle,
             }}
             className="select-text leading-snug font-medium transition-colors"
@@ -537,7 +697,11 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
           </div>
         );
 
-      case "Button":
+      case "Button": {
+        const btnHeight = w.opts.height
+          ? `${Number(w.opts.height) * 20 + 8}px`
+          : undefined;
+        const isCompact = w.opts.width && Number(w.opts.width) <= 4;
         return (
           <div key={w.id} style={wrapperStyle}>
             <button
@@ -546,14 +710,18 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
                 color: fg || "#111827",
                 backgroundColor: bg || "#E5E7EB",
                 width: width || "auto",
+                minHeight: btnHeight,
                 ...fontStyle,
               }}
-              className="px-3.5 py-1.5 rounded-md border border-[#9CA3AF] shadow-xs hover:brightness-95 active:brightness-90 active:scale-98 transition-all cursor-pointer font-semibold"
+              className={`${
+                isCompact ? "px-1 py-1" : "px-3.5 py-1.5"
+              } rounded-md border border-[#9CA3AF] shadow-xs hover:brightness-95 active:brightness-90 active:scale-98 transition-all cursor-pointer font-semibold whitespace-pre-line leading-tight`}
             >
-              {w.opts.text || "Button"}
+              {w.opts.text ?? "Button"}
             </button>
           </div>
         );
+      }
 
       case "Entry":
         return (
@@ -629,7 +797,7 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
           <div
             key={w.id}
             style={wrapperStyle}
-            className="flex flex-col items-center gap-1 w-full max-w-[280px]"
+            className="flex flex-col items-center gap-1 w-full max-w-[280px] bg-white/90 px-2.5 py-1.5 rounded-lg"
           >
             {labelText && (
               <div className="text-[12px] font-semibold text-[#374151] self-start flex justify-between w-full">
@@ -703,10 +871,7 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
     }
   };
 
-  // Only top-level widgets or widgets whose master is root / None
-  const topWidgets = widgets.filter(
-    (w) => !w.master || w.master === root?.pyWidget
-  );
+  // Window Client Area layout (topWidgets computed above)
 
   return (
     <div className="mt-4 pt-3 border-t border-[#E3E3E9] space-y-2">
@@ -768,9 +933,17 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
           </div>
 
           {/* Window Client Area */}
-          <div className="relative p-4 flex-1 flex flex-col items-center justify-start bg-[#F0F0F0]">
+          <div
+            style={{ backgroundColor: rootBg }}
+            className="relative p-4 flex-1 flex flex-col items-center justify-start transition-colors"
+          >
             {hasGridWidgets ? (
-              <div className="grid grid-cols-4 gap-2 w-full justify-items-center items-center">
+              <div
+                style={{
+                  gridTemplateColumns: `repeat(${maxGridCols}, minmax(0, 1fr))`,
+                }}
+                className="grid gap-1.5 w-full justify-items-center items-center"
+              >
                 {topWidgets.map((w) => renderWidget(w))}
               </div>
             ) : (

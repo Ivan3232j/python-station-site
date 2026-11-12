@@ -264,7 +264,7 @@ export async function runPython(
     console.warn("VFS init error:", vfsErr);
   }
 
-  // 2. Сброс состояния виджетов Tkinter перед каждым запуском
+  // 2. Сброс состояния виджетов Tkinter и очереди звуков Pygame перед каждым запуском
   try {
     const tkMod = Sk.sysmodules
       ? Sk.sysmodules.quick$lookup(new Sk.builtin.str("tkinter"))
@@ -272,6 +272,13 @@ export async function runPython(
     if (tkMod && tkMod.$d) {
       tkMod.$d.WIDGETS = new Sk.builtin.list([]);
       tkMod.$d.LOG = new Sk.builtin.list([]);
+      tkMod.$d.AFTER_QUEUE = new Sk.builtin.list([]);
+    }
+    const pgMod = Sk.sysmodules
+      ? Sk.sysmodules.quick$lookup(new Sk.builtin.str("pygame"))
+      : null;
+    if (pgMod && pgMod.$d && pgMod.$d.mixer && pgMod.$d.mixer.$d) {
+      pgMod.$d.mixer.$d._sound_queue = new Sk.builtin.list([]);
     }
   } catch {}
 
