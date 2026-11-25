@@ -5,6 +5,11 @@ import pygameInitCode from "./pyStubs/pygame_init.py?raw";
 import osStubCode from "./pyStubs/os_stub.py?raw";
 import vfsCode from "./pyStubs/vfs.py?raw";
 import jsonInitCode from "./pyStubs/json_init.py?raw";
+import requestsStubCode from "./pyStubs/requests.py?raw";
+import ioStubCode from "./pyStubs/io.py?raw";
+import pilInitCode from "./pyStubs/PIL/__init__.py?raw";
+import pilImageCode from "./pyStubs/PIL/Image.py?raw";
+import pilImageTkCode from "./pyStubs/PIL/ImageTk.py?raw";
 
 declare global {
   interface Window {
@@ -143,6 +148,12 @@ export function injectNativeSkulptModules() {
   Sk.builtinFiles.files["src/lib/pygame.py"] = pygameInitCode;
   Sk.builtinFiles.files["src/lib/os.py"] = osStubCode;
   Sk.builtinFiles.files["src/lib/os/__init__.py"] = osStubCode;
+  // Уроки 11–12: локальные учебные ответы API и минимальный предпросмотр Pillow.
+  Sk.builtinFiles.files["src/lib/requests.py"] = requestsStubCode;
+  Sk.builtinFiles.files["src/lib/io.py"] = ioStubCode;
+  Sk.builtinFiles.files["src/lib/PIL/__init__.py"] = pilInitCode;
+  Sk.builtinFiles.files["src/lib/PIL/Image.py"] = pilImageCode;
+  Sk.builtinFiles.files["src/lib/PIL/ImageTk.py"] = pilImageTkCode;
 }
 
 const TIMEOUT_ERROR_MESSAGE =

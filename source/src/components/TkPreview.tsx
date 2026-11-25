@@ -679,6 +679,9 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
 
     switch (w.kind) {
       case "Label":
+        const imageUrl = typeof w.opts.image === "string" && w.opts.image.startsWith("https://")
+          ? w.opts.image
+          : "";
         return (
           <div
             key={w.id}
@@ -693,7 +696,13 @@ export const TkPreview: React.FC<TkPreviewProps> = ({
             }}
             className="select-text leading-snug font-medium transition-colors"
           >
-            {w.opts.text || ""}
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Изображение из Python-программы"
+                style={{ display: "block", maxWidth: "min(400px, 80vw)", maxHeight: "400px", objectFit: "contain" }}
+              />
+            ) : (w.opts.text || "")}
           </div>
         );
 

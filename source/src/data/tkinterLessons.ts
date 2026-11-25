@@ -1,4 +1,5 @@
 import { PythonLesson } from "./pythonCurriculum";
+import { API_LESSONS } from "./apiLessons";
 
 export const TKINTER_LESSONS: PythonLesson[] = [
   // ==========================================
@@ -1847,4 +1848,5 @@ print("OK_SEQUENCER")
       },
     },
   },
+  ...API_LESSONS,
 ];
